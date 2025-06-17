@@ -2,20 +2,20 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:tripmate_mobile/models/kuliner_model.dart';
-import 'package:tripmate_mobile/admin/widgets/card_kuliner_baru.dart';
+import 'package:tripmate_mobile/models/vila_model.dart';
+import 'package:tripmate_mobile/admin/widgets/card_vila_baru.dart';
 
-class KelolaKuliner extends StatefulWidget {
+class KelolaVila extends StatefulWidget {
   final VoidCallback? onBack;
-  const KelolaKuliner({Key? key, this.onBack}) : super(key: key);
+  const KelolaVila({Key? key, this.onBack}) : super(key: key);
 
   @override
-  State<KelolaKuliner> createState() => _KelolaKulinerState();
+  State<KelolaVila> createState() => _KelolaVilaState();
 }
 
-class _KelolaKulinerState extends State<KelolaKuliner> {
+class _KelolaVilaState extends State<KelolaVila> {
   final _formKey = GlobalKey<FormState>();
-  late final Box<KulinerModel> kulinerBox;
+  late final Box<VilaModel> vilaBox;
   final ScrollController _scrollController = ScrollController();
 
   final nameController = TextEditingController();
@@ -24,60 +24,77 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
   final reviewCountController = TextEditingController();
   final priceController = TextEditingController();
   final lokasiDetailController = TextEditingController();
-  final jamBukaController = TextEditingController(text: '10:00');
-  final jamTutupController = TextEditingController(text: '22:00');
+  final fasilitasController = TextEditingController();
+  final jumlahKamarController = TextEditingController();
+  final kapasitasController = TextEditingController();
+  final checkInController = TextEditingController(text: '14:00');
+  final checkOutController = TextEditingController(text: '12:00');
 
-  String? selectedKategori;
+  String? selectedTipeVila;
   String? selectedLokasi;
   String? imageBase64;
   int? editingIndex;
 
-  // Data dropdown
-  final List<String> kategoriKuliner = [
-    'BBQ & Grill',
-    'Indonesian',
-    'Chinese',
-    'Western',
-    'Seafood',
-    'Dessert',
-    'Fast Food',
-    'Coffee & Tea'
-  ];
-  final List<String> lokasiList = ['Surabaya', 'Bali', 'Jogja'];
+  // Fasilitas boolean
+  bool tersediaWifi = false;
+  bool tersediaKolam = false;
+  bool tersediaParkir = false;
 
-  // Focus nodes untuk styling konsisten
+  // Data dropdown
+  final List<String> tipeVilaList = [
+    'Vila Keluarga',
+    'Vila Romantis',
+    'Vila Mewah',
+    'Vila Pantai',
+    'Vila Pegunungan',
+    'Vila Modern',
+    'Vila Tradisional'
+  ];
+  
+  final List<String> lokasiList = ['Surabaya', 'Bali', 'Jogja', 'Bandung', 'Lombok'];
+
+  // Focus nodes untuk mengubah warna border
   final FocusNode nameFocus = FocusNode();
   final FocusNode deskripsiFocus = FocusNode();
   final FocusNode ratingFocus = FocusNode();
   final FocusNode reviewFocus = FocusNode();
   final FocusNode priceFocus = FocusNode();
   final FocusNode lokasiDetailFocus = FocusNode();
-  final FocusNode jamBukaFocus = FocusNode();
-  final FocusNode jamTutupFocus = FocusNode();
+  final FocusNode fasilitasFocus = FocusNode();
+  final FocusNode jumlahKamarFocus = FocusNode();
+  final FocusNode kapasitasFocus = FocusNode();
+  final FocusNode checkInFocus = FocusNode();
+  final FocusNode checkOutFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
     try {
-      kulinerBox = Hive.box<KulinerModel>('kulinerBox');
+      vilaBox = Hive.box<VilaModel>('vilaBox');
       
       // Test data jika box kosong
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (kulinerBox.isEmpty) {
-          final testKuliner = KulinerModel(
-            nama: 'Brazilian Aussie BBQ',
-            deskripsi: 'Restoran BBQ dengan cita rasa Australia dan Brazil yang autentik',
-            kategori: 'BBQ & Grill',
+        if (vilaBox.isEmpty) {
+          final testVila = VilaModel(
+            nama: 'Vila Sunset Paradise',
+            deskripsi: 'Vila mewah dengan pemandangan sunset yang menakjubkan',
             lokasi: 'Bali',
-            lokasiDetail: 'Jl. Beraban No.12, Bali',
-            rating: 4.9,
-            jumlahReview: 156,
-            hargaMulaiDari: 30000,
+            lokasiDetail: 'Jl. Pantai Kuta No.15, Bali',
+            hargaPerMalam: 850000,
+            rating: 4.8,
+            jumlahReview: 124,
+            fasilitas: 'AC, TV, Kulkas, Dapur Lengkap',
+            jumlahKamar: 3,
+            kapasitas: 6,
             imageBase64: '',
-            jamBuka: '10:00',
-            jamTutup: '22:00',
+            checkIn: '14:00',
+            checkOut: '12:00',
+            tipeVila: 'Vila Pantai',
+            tersediaWifi: true,
+            tersediaKolam: true,
+            tersediaParkir: true,
           );
-          kulinerBox.add(testKuliner);
+          vilaBox.add(testVila);
           setState(() {});
         }
       });
@@ -95,16 +112,22 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
     reviewCountController.dispose();
     priceController.dispose();
     lokasiDetailController.dispose();
-    jamBukaController.dispose();
-    jamTutupController.dispose();
+    fasilitasController.dispose();
+    jumlahKamarController.dispose();
+    kapasitasController.dispose();
+    checkInController.dispose();
+    checkOutController.dispose();
     nameFocus.dispose();
     deskripsiFocus.dispose();
     ratingFocus.dispose();
     reviewFocus.dispose();
     priceFocus.dispose();
     lokasiDetailFocus.dispose();
-    jamBukaFocus.dispose();
-    jamTutupFocus.dispose();
+    fasilitasFocus.dispose();
+    jumlahKamarFocus.dispose();
+    kapasitasFocus.dispose();
+    checkInFocus.dispose();
+    checkOutFocus.dispose();
     super.dispose();
   }
 
@@ -169,12 +192,18 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
     reviewCountController.clear();
     priceController.clear();
     lokasiDetailController.clear();
-    jamBukaController.text = '10:00';
-    jamTutupController.text = '22:00';
-    selectedKategori = null;
+    fasilitasController.clear();
+    jumlahKamarController.clear();
+    kapasitasController.clear();
+    checkInController.text = '14:00';
+    checkOutController.text = '12:00';
+    selectedTipeVila = null;
     selectedLokasi = null;
     imageBase64 = null;
     editingIndex = null;
+    tersediaWifi = false;
+    tersediaKolam = false;
+    tersediaParkir = false;
     setState(() {});
   }
 
@@ -242,7 +271,7 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
               ),
               const SizedBox(width: 8),
               Text(
-                editingIndex == null ? 'Konfirmasi Tambah Kuliner' : 'Konfirmasi Update Kuliner',
+                editingIndex == null ? 'Konfirmasi Tambah Vila' : 'Konfirmasi Update Vila',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -260,8 +289,8 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
             children: [
               Text(
                 editingIndex == null
-                    ? 'Apakah Anda yakin ingin menambahkan kuliner "${nameController.text}"?'
-                    : 'Apakah Anda yakin ingin memperbarui data kuliner "${nameController.text}"?',
+                    ? 'Apakah Anda yakin ingin menambahkan vila "${nameController.text}"?'
+                    : 'Apakah Anda yakin ingin memperbarui data vila "${nameController.text}"?',
                 style: const TextStyle(
                   fontSize: 16,
                   color: Colors.black87,
@@ -294,9 +323,9 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
                       ),
                       const SizedBox(height: 8),
                       Text('• Nama: ${nameController.text}'),
-                      Text('• Kategori: $selectedKategori'),
+                      Text('• Tipe: $selectedTipeVila'),
                       Text('• Lokasi: $selectedLokasi'),
-                      Text('• Harga: Rp ${priceController.text}'),
+                      Text('• Harga: Rp ${priceController.text}/malam'),
                     ],
                   ),
                 ),
@@ -357,86 +386,46 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
     ) ?? false;
   }
 
-  void _showUpdateConfirmationDialog() async {
-    final confirmed = await _showSaveConfirmation();
-    if (confirmed) {
-      _performUpdate();
-    }
-  }
-
-  void _performUpdate() async {
-    try {
-      final kuliner = KulinerModel(
-        nama: nameController.text,
-        deskripsi: deskripsiController.text,
-        kategori: selectedKategori!,
-        lokasi: selectedLokasi!,
-        lokasiDetail: lokasiDetailController.text,
-        rating: double.tryParse(ratingController.text) ?? 0.0,
-        jumlahReview: int.tryParse(reviewCountController.text) ?? 0,
-        hargaMulaiDari: int.tryParse(priceController.text) ?? 0,
-        imageBase64: imageBase64 ?? '',
-        jamBuka: jamBukaController.text,
-        jamTutup: jamTutupController.text,
-      );
-
-      await kulinerBox.putAt(editingIndex!, kuliner);
-
-      setState(() {});
-      resetForm();
-      
-      _showSuccessSnackBar('Kuliner "${nameController.text}" berhasil diperbarui!');
-
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted && _scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-          );
-        }
-      });
-
-    } catch (e) {
-      _showErrorSnackBar('Gagal memperbarui kuliner. Silakan coba lagi.');
-    }
-  }
-
-  void saveKuliner() async {
+  void saveVila() async {
     if (_formKey.currentState!.validate() &&
-        selectedKategori != null &&
+        selectedTipeVila != null &&
         selectedLokasi != null &&
         lokasiDetailController.text.isNotEmpty
     ) {
-      if (editingIndex != null) {
-        _showUpdateConfirmationDialog();
-        return;
-      }
-
       final confirmed = await _showSaveConfirmation();
       if (!confirmed) return;
 
       try {
-        final kuliner = KulinerModel(
+        final vila = VilaModel(
           nama: nameController.text,
           deskripsi: deskripsiController.text,
-          kategori: selectedKategori!,
           lokasi: selectedLokasi!,
           lokasiDetail: lokasiDetailController.text,
+          hargaPerMalam: int.tryParse(priceController.text) ?? 0,
           rating: double.tryParse(ratingController.text) ?? 0.0,
           jumlahReview: int.tryParse(reviewCountController.text) ?? 0,
-          hargaMulaiDari: int.tryParse(priceController.text) ?? 0,
+          fasilitas: fasilitasController.text,
+          jumlahKamar: int.tryParse(jumlahKamarController.text) ?? 1,
+          kapasitas: int.tryParse(kapasitasController.text) ?? 2,
           imageBase64: imageBase64 ?? '',
-          jamBuka: jamBukaController.text,
-          jamTutup: jamTutupController.text,
+          checkIn: checkInController.text,
+          checkOut: checkOutController.text,
+          tipeVila: selectedTipeVila!,
+          tersediaWifi: tersediaWifi,
+          tersediaKolam: tersediaKolam,
+          tersediaParkir: tersediaParkir,
         );
 
-        await kulinerBox.add(kuliner);
+        if (editingIndex == null) {
+          await vilaBox.add(vila);
+          _showSuccessSnackBar('Vila "${nameController.text}" berhasil ditambahkan!');
+        } else {
+          await vilaBox.putAt(editingIndex!, vila);
+          _showSuccessSnackBar('Vila "${nameController.text}" berhasil diperbarui!');
+        }
 
         setState(() {});
         resetForm();
-        
-        _showSuccessSnackBar('Kuliner "${nameController.text}" berhasil ditambahkan!');
 
         Future.delayed(const Duration(milliseconds: 300), () {
           if (mounted && _scrollController.hasClients) {
@@ -449,29 +438,35 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
         });
 
       } catch (e) {
-        _showErrorSnackBar('Gagal menyimpan kuliner. Silakan coba lagi.');
+        _showErrorSnackBar('Gagal menyimpan vila. Silakan coba lagi.');
       }
     } else {
       _showWarningSnackBar('Mohon lengkapi semua field yang wajib diisi!');
     }
   }
 
-  void editKuliner(int index) {
-    final kuliner = kulinerBox.getAt(index);
-    if (kuliner != null) {
+  void editVila(int index) {
+    final vila = vilaBox.getAt(index);
+    if (vila != null) {
       setState(() {
         editingIndex = index;
-        nameController.text = kuliner.nama;
-        deskripsiController.text = kuliner.deskripsi;
-        selectedKategori = kuliner.kategori;
-        selectedLokasi = kuliner.lokasi;
-        lokasiDetailController.text = kuliner.lokasiDetail;
-        ratingController.text = kuliner.rating.toString();
-        reviewCountController.text = kuliner.jumlahReview.toString();
-        priceController.text = kuliner.hargaMulaiDari.toString();
-        jamBukaController.text = kuliner.jamBuka;
-        jamTutupController.text = kuliner.jamTutup;
-        imageBase64 = kuliner.imageBase64.isEmpty ? null : kuliner.imageBase64;
+        nameController.text = vila.nama;
+        deskripsiController.text = vila.deskripsi;
+        selectedLokasi = vila.lokasi;
+        lokasiDetailController.text = vila.lokasiDetail;
+        priceController.text = vila.hargaPerMalam.toString();
+        ratingController.text = vila.rating.toString();
+        reviewCountController.text = vila.jumlahReview.toString();
+        fasilitasController.text = vila.fasilitas;
+        jumlahKamarController.text = vila.jumlahKamar.toString();
+        kapasitasController.text = vila.kapasitas.toString();
+        checkInController.text = vila.checkIn;
+        checkOutController.text = vila.checkOut;
+        selectedTipeVila = vila.tipeVila;
+        tersediaWifi = vila.tersediaWifi;
+        tersediaKolam = vila.tersediaKolam;
+        tersediaParkir = vila.tersediaParkir;
+        imageBase64 = vila.imageBase64.isEmpty ? null : vila.imageBase64;
       });
       
       _scrollController.animateTo(
@@ -480,11 +475,11 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
         curve: Curves.easeInOut,
       );
       
-      _showSuccessSnackBar('Data kuliner "${kuliner.nama}" dimuat untuk diedit');
+      _showSuccessSnackBar('Data vila "${vila.nama}" dimuat untuk diedit');
     }
   }
 
-  Future<bool> _showDeleteConfirmation(String kulinerNama) async {
+  Future<bool> _showDeleteConfirmation(String vilaNama) async {
     return await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -508,7 +503,7 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
               Icon(Icons.warning_outlined, color: Colors.white, size: 24),
               SizedBox(width: 8),
               Text(
-                'Konfirmasi Hapus Kuliner',
+                'Konfirmasi Hapus Vila',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -521,7 +516,7 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
         content: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
-            'Apakah Anda yakin ingin menghapus kuliner "$kulinerNama"?\n\nTindakan ini tidak dapat dibatalkan.',
+            'Apakah Anda yakin ingin menghapus vila "$vilaNama"?\n\nTindakan ini tidak dapat dibatalkan.',
             style: const TextStyle(
               fontSize: 16,
               color: Colors.black87,
@@ -581,20 +576,199 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
     ) ?? false;
   }
 
-  void deleteKuliner(int index) async {
-    final kuliner = kulinerBox.getAt(index);
-    if (kuliner != null) {
-      final confirmed = await _showDeleteConfirmation(kuliner.nama);
+  void deleteVila(int index) async {
+    final vila = vilaBox.getAt(index);
+    if (vila != null) {
+      final confirmed = await _showDeleteConfirmation(vila.nama);
       if (confirmed) {
         try {
-          await kulinerBox.deleteAt(index);
-          _showSuccessSnackBar('Kuliner "${kuliner.nama}" berhasil dihapus!');
+          await vilaBox.deleteAt(index);
+          _showSuccessSnackBar('Vila "${vila.nama}" berhasil dihapus!');
           setState(() {});
         } catch (e) {
-          _showErrorSnackBar('Gagal menghapus kuliner. Silakan coba lagi.');
+          _showErrorSnackBar('Gagal menghapus vila. Silakan coba lagi.');
         }
       }
     }
+  }
+
+  Widget buildTextField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String label,
+    required IconData icon,
+    String? hint,
+    TextInputType? type,
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        keyboardType: type,
+        maxLines: maxLines,
+        textAlign: TextAlign.left,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
+          ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
+          alignLabelWithHint: true,
+        ),
+        validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
+      ),
+    );
+  }
+
+  Widget buildTimeField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        readOnly: true,
+        onTap: onTap,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
+          suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.black),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
+          ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
+        ),
+        validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
+      ),
+    );
+  }
+
+  Widget buildDropdownField({
+    required String label,
+    required IconData icon,
+    required List<String> items,
+    required String? selectedValue,
+    required void Function(String?) onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: DropdownButtonFormField<String>(
+        value: selectedValue,
+        isExpanded: true,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
+          ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
+        ),
+        items: items.map((item) {
+          return DropdownMenuItem(value: item, child: Text(item, textAlign: TextAlign.left));
+        }).toList(),
+        validator: (val) => val == null || val.isEmpty ? 'Wajib dipilih' : null,
+      ),
+    );
+  }
+
+  Widget buildFasilitasUtamaField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Fasilitas Utama', style: TextStyle(fontSize: 16)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: CheckboxListTile(
+                  title: const Row(
+                    children: [
+                      Icon(Icons.wifi, size: 16, color: Color(0xFFDC2626)),
+                      SizedBox(width: 4),
+                      Text('WiFi', style: TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                  value: tersediaWifi,
+                  onChanged: (value) => setState(() => tersediaWifi = value ?? false),
+                  activeColor: const Color(0xFFDC2626),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                ),
+              ),
+              Expanded(
+                child: CheckboxListTile(
+                  title: const Row(
+                    children: [
+                      Icon(Icons.pool, size: 16, color: Color(0xFFDC2626)),
+                      SizedBox(width: 4),
+                      Text('Kolam', style: TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                  value: tersediaKolam,
+                  onChanged: (value) => setState(() => tersediaKolam = value ?? false),
+                  activeColor: const Color(0xFFDC2626),
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                ),
+              ),
+            ],
+          ),
+          CheckboxListTile(
+            title: const Row(
+              children: [
+                Icon(Icons.local_parking, size: 16, color: Color(0xFFDC2626)),
+                SizedBox(width: 4),
+                Text('Parkir', style: TextStyle(fontSize: 14)),
+              ],
+            ),
+            value: tersediaParkir,
+            onChanged: (value) => setState(() => tersediaParkir = value ?? false),
+            activeColor: const Color(0xFFDC2626),
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -618,7 +792,7 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
               ),
               const SizedBox(width: 8),
               const Text(
-                'Kelola Kuliner',
+                'Kelola Vila',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
@@ -637,7 +811,7 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              editingIndex == null ? 'Masukkan Data Kuliner Baru' : 'Edit Data Kuliner',
+              editingIndex == null ? 'Masukkan Data Vila Baru' : 'Edit Data Vila',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
@@ -649,24 +823,24 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
                   buildTextField(
                     controller: nameController,
                     focusNode: nameFocus,
-                    label: 'Nama Restoran/Kuliner',
-                    icon: Icons.restaurant,
-                    hint: 'Masukkan nama restoran',
+                    label: 'Nama Vila',
+                    icon: Icons.villa,
+                    hint: 'Masukkan nama vila',
                   ),
                   buildTextField(
                     controller: deskripsiController,
                     focusNode: deskripsiFocus,
                     label: 'Deskripsi',
                     icon: Icons.description,
-                    hint: 'Masukkan deskripsi kuliner',
+                    hint: 'Masukkan deskripsi vila',
                     maxLines: 3,
                   ),
                   buildDropdownField(
-                    label: 'Kategori Kuliner',
-                    icon: Icons.restaurant_menu,
-                    items: kategoriKuliner,
-                    selectedValue: selectedKategori,
-                    onChanged: (value) => setState(() => selectedKategori = value),
+                    label: 'Tipe Vila',
+                    icon: Icons.home_work,
+                    items: tipeVilaList,
+                    selectedValue: selectedTipeVila,
+                    onChanged: (value) => setState(() => selectedTipeVila = value),
                   ),
                   buildDropdownField(
                     label: 'Lokasi',
@@ -680,29 +854,54 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
                     focusNode: lokasiDetailFocus,
                     label: 'Detail Lokasi',
                     icon: Icons.place,
-                    hint: 'Masukkan alamat lengkap restoran',
+                    hint: 'Masukkan alamat lengkap vila',
                   ),
                   
-                  // Jam Operasional
+                  Row(
+                    children: [
+                      Expanded(
+                        child: buildTextField(
+                          controller: jumlahKamarController,
+                          focusNode: jumlahKamarFocus,
+                          label: 'Jumlah Kamar',
+                          icon: Icons.bed,
+                          hint: 'Contoh: 3',
+                          type: TextInputType.number,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: buildTextField(
+                          controller: kapasitasController,
+                          focusNode: kapasitasFocus,
+                          label: 'Kapasitas',
+                          icon: Icons.people,
+                          hint: 'Contoh: 6',
+                          type: TextInputType.number,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
                   Row(
                     children: [
                       Expanded(
                         child: buildTimeField(
-                          controller: jamBukaController,
-                          focusNode: jamBukaFocus,
-                          label: 'Jam Buka',
-                          icon: Icons.access_time,
-                          onTap: () => _selectTime(context, jamBukaController),
+                          controller: checkInController,
+                          focusNode: checkInFocus,
+                          label: 'Check-in',
+                          icon: Icons.login,
+                          onTap: () => _selectTime(context, checkInController),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: buildTimeField(
-                          controller: jamTutupController,
-                          focusNode: jamTutupFocus,
-                          label: 'Jam Tutup',
-                          icon: Icons.access_time_filled,
-                          onTap: () => _selectTime(context, jamTutupController),
+                          controller: checkOutController,
+                          focusNode: checkOutFocus,
+                          label: 'Check-out',
+                          icon: Icons.logout,
+                          onTap: () => _selectTime(context, checkOutController),
                         ),
                       ),
                     ],
@@ -716,7 +915,7 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
                           focusNode: ratingFocus,
                           label: 'Rating',
                           icon: Icons.star,
-                          hint: 'Contoh: 4.9',
+                          hint: 'Contoh: 4.8',
                           type: TextInputType.number,
                         ),
                       ),
@@ -726,26 +925,39 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
                           controller: reviewCountController,
                           focusNode: reviewFocus,
                           label: 'Jumlah Review',
-                          icon: Icons.people,
-                          hint: 'Contoh: 156',
+                          icon: Icons.rate_review,
+                          hint: 'Contoh: 124',
                           type: TextInputType.number,
                         ),
                       ),
                     ],
                   ),
+                  
                   buildTextField(
                     controller: priceController,
                     focusNode: priceFocus,
-                    label: 'Harga Mulai Dari',
+                    label: 'Harga Per Malam',
                     icon: Icons.attach_money,
-                    hint: 'Masukkan harga mulai dari',
+                    hint: 'Masukkan harga per malam',
                     type: TextInputType.number,
                   ),
+                  
+                  buildTextField(
+                    controller: fasilitasController,
+                    focusNode: fasilitasFocus,
+                    label: 'Fasilitas Tambahan',
+                    icon: Icons.featured_play_list,
+                    hint: 'Contoh: AC, TV, Kulkas, Dapur Lengkap',
+                    maxLines: 2,
+                  ),
+                  
+                  buildFasilitasUtamaField(),
+                  
                   const SizedBox(height: 10),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      "Unggah Foto Restoran",
+                      "Unggah Foto Vila",
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey[700],
@@ -825,7 +1037,7 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
                       ],
                       Expanded(
                         child: ElevatedButton.icon(
-                          onPressed: saveKuliner,
+                          onPressed: saveVila,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFDC2626),
                             foregroundColor: Colors.white,
@@ -834,12 +1046,11 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
                             ),
                           ),
                           icon: Icon(editingIndex == null ? Icons.add : Icons.update),
-                          label: Text(editingIndex == null ? "Tambah Kuliner" : "Update Kuliner"),
+                          label: Text(editingIndex == null ? "Tambah Vila" : "Update Vila"),
                         ),
                       ),
                     ],
                   ),
-                  
                 ],
               ),
             ),
@@ -847,7 +1058,7 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
             const Divider(),
             Row(
               children: [
-                const Text('Daftar Kuliner', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Daftar Vila', style: TextStyle(fontWeight: FontWeight.bold)),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -856,8 +1067,8 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ValueListenableBuilder(
-                    valueListenable: kulinerBox.listenable(),
-                    builder: (context, Box<KulinerModel> box, _) {
+                    valueListenable: vilaBox.listenable(),
+                    builder: (context, Box<VilaModel> box, _) {
                       return Text(
                         '${box.length} item',
                         style: const TextStyle(color: Colors.white, fontSize: 12),
@@ -870,17 +1081,17 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
             const SizedBox(height: 8),
             
             ValueListenableBuilder(
-              valueListenable: kulinerBox.listenable(),
-              builder: (context, Box<KulinerModel> box, _) {
+              valueListenable: vilaBox.listenable(),
+              builder: (context, Box<VilaModel> box, _) {
                 if (box.isEmpty) {
                   return Container(
                     padding: const EdgeInsets.all(32),
                     child: Column(
                       children: [
-                        Icon(Icons.restaurant_outlined, size: 64, color: Colors.grey[400]),
+                        Icon(Icons.villa_outlined, size: 64, color: Colors.grey[400]),
                         const SizedBox(height: 16),
                         Text(
-                          'Belum ada kuliner yang ditambahkan',
+                          'Belum ada vila yang ditambahkan',
                           style: TextStyle(color: Colors.grey[600], fontSize: 16),
                         ),
                       ],
@@ -893,17 +1104,17 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: box.length,
                   itemBuilder: (context, index) {
-                    final kuliner = box.getAt(index);
-                    if (kuliner == null) {
+                    final vila = box.getAt(index);
+                    if (vila == null) {
                       return const SizedBox.shrink();
                     }
                     
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
-                      child: CardKulinerBaru(
-                        kuliner: kuliner,
-                        onEdit: () => editKuliner(index),
-                        onDelete: () => deleteKuliner(index),
+                      child: CardVilaBaru(
+                        vila: vila,
+                        onEdit: () => editVila(index),
+                        onDelete: () => deleteVila(index),
                       ),
                     );
                   },
@@ -912,122 +1123,6 @@ class _KelolaKulinerState extends State<KelolaKuliner> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget buildTextField({
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required String label,
-    required IconData icon,
-    String? hint,
-    TextInputType? type,
-    int maxLines = 1,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        keyboardType: type,
-        maxLines: maxLines,
-        textAlign: TextAlign.left,
-        decoration: InputDecoration(
-          labelText: label,
-          hintText: hint,
-          prefixIcon: Icon(icon, size: 20, color: Colors.black),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
-          ),
-          labelStyle: const TextStyle(color: Colors.grey),
-          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
-          alignLabelWithHint: true,
-        ),
-        validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
-      ),
-    );
-  }
-  
-  Widget buildTimeField({
-    required TextEditingController controller,
-    required FocusNode focusNode,
-    required String label,
-    required IconData icon,
-    required VoidCallback onTap,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: TextFormField(
-        controller: controller,
-        focusNode: focusNode,
-        readOnly: true,
-        onTap: onTap,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, size: 20, color: Colors.black),
-          suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.black),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
-          ),
-          labelStyle: const TextStyle(color: Colors.grey),
-          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
-        ),
-        validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
-      ),
-    );
-  }
-
-  Widget buildDropdownField({
-    required String label,
-    required IconData icon,
-    required List<String> items,
-    required String? selectedValue,
-    required void Function(String?) onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: DropdownButtonFormField<String>(
-        value: selectedValue,
-        isExpanded: true,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, size: 20, color: Colors.black),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
-          ),
-          labelStyle: const TextStyle(color: Colors.grey),
-          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
-        ),
-        items: items.map((item) {
-          return DropdownMenuItem(value: item, child: Text(item, textAlign: TextAlign.left));
-        }).toList(),
-        validator: (val) => val == null || val.isEmpty ? 'Wajib dipilih' : null,
       ),
     );
   }

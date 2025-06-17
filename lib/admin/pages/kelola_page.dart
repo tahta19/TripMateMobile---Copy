@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:tripmate_mobile/admin/pages/akomodasi/kelola_vila.dart';
 import 'kelola_pesawat.dart';
 import 'kelola_mobil.dart';
 import 'tempat/kelola_aktivitas.dart';
@@ -174,6 +175,16 @@ class _GridItemState extends State<GridItem> {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const KelolaKuliner()),
+          ).then((_) {
+            setState(() {
+              isSelected = false;
+            });
+          });
+        }
+                if (widget.label == 'Vila') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const KelolaVila()),
           ).then((_) {
             setState(() {
               isSelected = false;

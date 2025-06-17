@@ -61,18 +61,30 @@ class CardPesawatBaru extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFDC2626),
                 ),
               ),
               const SizedBox(height: 10),
-              Image.asset('assets/icons/arrow.png', width: 28, height: 40),
-              const SizedBox(height: 14),
+              const Icon(
+                Icons.flight_takeoff,
+                size: 28,
+              ),
+              const SizedBox(height: 4),
+              Container(
+                width: 2,
+                height: 20,
+                color: Colors.grey[300],
+              ),
+              const SizedBox(height: 4),
+              const Icon(
+                Icons.flight_land,
+                size: 28,
+              ),
+              const SizedBox(height: 10),
               Text(
                 formatJam(waktuTiba),
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFDC2626),
                 ),
               ),
             ],
@@ -94,7 +106,10 @@ class CardPesawatBaru extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Text('✈️'),
+                    const Icon(
+                      Icons.flight,
+                      size: 16,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       pesawat.nama,
@@ -108,7 +123,10 @@ class CardPesawatBaru extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Text('⏱️'),
+                    const Icon(
+                      Icons.schedule,
+                      size: 16,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       '$jam Jam $menit Menit',
@@ -119,7 +137,10 @@ class CardPesawatBaru extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Text('💺'),
+                    const Icon(
+                      Icons.airline_seat_recline_extra,
+                      size: 16,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       pesawat.kelas,
@@ -138,13 +159,18 @@ class CardPesawatBaru extends StatelessWidget {
                         fontSize: 16,
                       ),
                     ),
-                    Text(
-                      'Rp ${NumberFormat("#,###", "id_ID").format(pesawat.harga)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFFDC2626),
-                        fontSize: 16,
-                      ),
+                    Row(
+                      children: [
+                        
+                        Text(
+                          'Rp ${NumberFormat("#,###", "id_ID").format(pesawat.harga)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFDC2626),
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

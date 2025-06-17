@@ -29,6 +29,10 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
   String? imageBase64;
   int? editingIndex;
 
+  // Focus nodes untuk mengubah warna border
+  final FocusNode merkFocus = FocusNode();
+  final FocusNode hargaFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -44,7 +48,63 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
     _scrollController.dispose();
     merkController.dispose();
     hargaController.dispose();
+    merkFocus.dispose();
+    hargaFocus.dispose();
     super.dispose();
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showWarningSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.warning, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.orange,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   void resetForm() {
@@ -65,203 +125,128 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
       setState(() {
         imageBase64 = base64Encode(bytes);
       });
+      _showSuccessSnackBar('Foto berhasil dipilih!');
     }
   }
 
-  void _showUpdateConfirmationDialog() {
-    showDialog(
+  Future<bool> _showSaveConfirmation() async {
+    return await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Color(0xFFDC2626),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
           ),
-          title: Row(
+          child: Row(
             children: [
-              Icon(Icons.update, color: Colors.blue[600], size: 28),
-              const SizedBox(width: 12),
-              const Text(
-                'Konfirmasi Update',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              Icon(
+                editingIndex == null ? Icons.add_circle_outline : Icons.update,
+                color: Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                editingIndex == null ? 'Konfirmasi Tambah Mobil' : 'Konfirmasi Update Mobil',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            editingIndex == null
+                ? 'Apakah Anda yakin ingin menambahkan mobil "${merkController.text}"?'
+                : 'Apakah Anda yakin ingin memperbarui data mobil "${merkController.text}"?',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
             children: [
-              const Text(
-                'Apakah Anda yakin ingin memperbarui data mobil ini?',
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue[200]!),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, size: 16, color: Colors.blue[600]),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Data yang akan diperbarui:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue[700],
-                          ),
-                        ),
-                      ],
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
                     ),
-                    const SizedBox(height: 8),
-                    Text('• Merk: ${merkController.text}'),
-                    Text('• Penumpang: $selectedJumlahPenumpang'),
-                    Text('• Transmisi: $selectedTipe'),
-                    Text('• Harga: Rp ${hargaController.text}/hari'),
-                  ],
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    editingIndex == null ? 'Tambah' : 'Update',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Batal',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _performUpdate();
-              },
-              icon: const Icon(Icons.check, size: 18),
-              label: const Text('Ya, Update'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _performUpdate() async {
-    try {
-      final mobil = MobilModel(
-        merk: merkController.text,
-        jumlahPenumpang: selectedJumlahPenumpang ?? '',
-        tipeMobil: selectedTipe ?? '',
-        hargaSewa: int.tryParse(hargaController.text) ?? 0,
-        imageBase64: imageBase64 ?? '',
-      );
-
-      await mobilBox.putAt(editingIndex!, mobil);
-
-      setState(() {});
-      resetForm();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Data mobil berhasil diperbarui!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted && _scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-          );
-        }
-      });
-
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('Error memperbarui mobil: $e'),
-              ],
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+        ],
+      ),
+    ) ?? false;
   }
 
   void saveMobil() async {
     final isValid = _formKey.currentState!.validate();
     
     if (!isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.warning, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Harap lengkapi seluruh field yang wajib diisi'),
-            ],
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      _showWarningSnackBar('Harap lengkapi seluruh field yang wajib diisi');
       return;
     }
     
     if (imageBase64 == null || imageBase64!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.warning, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Gambar mobil wajib diunggah'),
-            ],
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      _showWarningSnackBar('Gambar mobil wajib diunggah');
       return;
     }
 
-    if (editingIndex != null) {
-      _showUpdateConfirmationDialog();
-      return;
-    }
+    final confirmed = await _showSaveConfirmation();
+    if (!confirmed) return;
 
     try {
       final mobil = MobilModel(
@@ -272,26 +257,16 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
         imageBase64: imageBase64 ?? '',
       );
 
-      await mobilBox.add(mobil);
+      if (editingIndex == null) {
+        await mobilBox.add(mobil);
+        _showSuccessSnackBar('Mobil "${merkController.text}" berhasil ditambahkan!');
+      } else {
+        await mobilBox.putAt(editingIndex!, mobil);
+        _showSuccessSnackBar('Mobil "${merkController.text}" berhasil diperbarui!');
+      }
 
       setState(() {});
       resetForm();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Data mobil berhasil disimpan!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
 
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _scrollController.hasClients) {
@@ -304,20 +279,7 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
       });
 
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('Error menyimpan mobil: $e'),
-              ],
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      _showErrorSnackBar('Gagal menyimpan mobil. Silakan coba lagi.');
     }
   }
 
@@ -338,52 +300,120 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
+      
+      _showSuccessSnackBar('Data mobil "${mobil.merk}" dimuat untuk diedit');
     }
   }
 
-  void deleteMobil(int index) async {
-    final confirm = await showDialog<bool>(
+  Future<bool> _showDeleteConfirmation(String mobilMerk) async {
+    return await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
-        title: const Text('Konfirmasi Hapus'),
-        content: const Text('Apakah Anda yakin ingin menghapus data mobil ini?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          child: const Row(
+            children: [
+              Icon(Icons.warning_outlined, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'Konfirmasi Hapus Mobil',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'Apakah Anda yakin ingin menghapus mobil "$mobilMerk"?\n\nTindakan ini tidak dapat dibatalkan.',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Hapus',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
-    );
+    ) ?? false;
+  }
 
-    if (confirm == true) {
-      try {
-        await mobilBox.deleteAt(index);
-        
-        if (mounted) {
+  void deleteMobil(int index) async {
+    final mobil = mobilBox.getAt(index);
+    if (mobil != null) {
+      final confirmed = await _showDeleteConfirmation(mobil.merk);
+      if (confirmed) {
+        try {
+          await mobilBox.deleteAt(index);
+          _showSuccessSnackBar('Mobil "${mobil.merk}" berhasil dihapus!');
           setState(() {});
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Data mobil berhasil dihapus!'),
-                ],
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
+        } catch (e) {
+          _showErrorSnackBar('Gagal menghapus mobil. Silakan coba lagi.');
         }
-      } catch (e) {
-        // Handle error silently
       }
     }
   }
@@ -428,7 +458,7 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              editingIndex == null ? 'Masukkan Data Mobil' : 'Edit Data Mobil',
+              editingIndex == null ? 'Masukkan Data Mobil Baru' : 'Edit Data Mobil',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
@@ -439,6 +469,7 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
                 children: [
                   buildTextField(
                     controller: merkController,
+                    focusNode: merkFocus,
                     label: 'Merk Mobil',
                     icon: Icons.directions_car,
                     hint: 'Masukkan merk mobil',
@@ -459,6 +490,7 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
                   ),
                   buildTextField(
                     controller: hargaController,
+                    focusNode: hargaFocus,
                     label: 'Harga Sewa per Hari',
                     icon: Icons.attach_money,
                     hint: 'Masukkan harga sewa',
@@ -487,42 +519,81 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: imageBase64 != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.memory(
-                                base64Decode(imageBase64!),
-                                fit: BoxFit.cover,
-                              ),
+                          ? Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.memory(
+                                    base64Decode(imageBase64!),
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(Icons.check, color: Colors.white, size: 20),
+                                  ),
+                                ),
+                              ],
                             )
                           : const Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                                  Icon(Icons.add_photo_alternate, size: 40, color: Colors.black),
                                   SizedBox(height: 8),
-                                  Text('Unggah Gambar', style: TextStyle(color: Colors.grey)),
+                                  Text('Unggah Gambar', style: TextStyle(color: Colors.black)),
                                 ],
                               ),
                             ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: saveMobil,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: editingIndex == null ? Colors.green : Colors.blue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Row(
+                    children: [
+                      if (editingIndex != null) ...[
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              resetForm();
+                              _showSuccessSnackBar('Form berhasil direset');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[600],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(Icons.clear),
+                            label: const Text("Batal Edit"),
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: saveMobil,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: Icon(editingIndex == null ? Icons.add : Icons.update),
+                          label: Text(editingIndex == null ? "Tambah Mobil" : "Update Mobil"),
+                        ),
                       ),
-                      icon: Icon(editingIndex == null ? Icons.save : Icons.update),
-                      label: Text(editingIndex == null ? "Simpan" : "Update"),
-                    ),
+                    ],
                   ),
-                  
                 ],
               ),
             ),
@@ -535,7 +606,7 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.blue,
+                    color: const Color(0xFFDC2626),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ValueListenableBuilder(
@@ -557,25 +628,16 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
               builder: (context, Box<MobilModel> box, _) {
                 if (box.isEmpty) {
                   return Container(
-                    padding: const EdgeInsets.all(40),
-                    child: const Center(
-                      child: Column(
-                        children: [
-                          Icon(Icons.directions_car, size: 64, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text(
-                            'Belum ada data mobil yang ditambahkan',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Tambahkan data mobil pertama Anda!',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      children: [
+                        Icon(Icons.directions_car_outlined, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Belum ada mobil yang ditambahkan',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -610,6 +672,7 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
 
   Widget buildTextField({
     required TextEditingController controller,
+    required FocusNode focusNode,
     required String label,
     required IconData icon,
     String? hint,
@@ -620,13 +683,14 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
         keyboardType: type,
         maxLines: maxLines,
         textAlign: TextAlign.left,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          prefixIcon: Icon(icon, size: 20),
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -636,8 +700,10 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
           ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
           alignLabelWithHint: true,
         ),
         validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
@@ -660,7 +726,7 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 20),
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -670,8 +736,10 @@ class _KelolaMobilPageState extends State<KelolaMobilPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
           ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
         ),
         items: items.map((item) {
           return DropdownMenuItem(value: item, child: Text(item, textAlign: TextAlign.left));

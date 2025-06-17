@@ -36,14 +36,21 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
   final List<String> tipeAktivitas = ['Budaya', 'Atraksi', 'Alam'];
   final List<String> lokasiList = ['Surabaya', 'Bali', 'Jogja'];
 
+  // Focus nodes untuk mengubah warna border
+  final FocusNode nameFocus = FocusNode();
+  final FocusNode deskripsiFocus = FocusNode();
+  final FocusNode ratingFocus = FocusNode();
+  final FocusNode reviewFocus = FocusNode();
+  final FocusNode priceFocus = FocusNode();
+  final FocusNode lokasiDetailFocus = FocusNode();
+  final FocusNode jamBukaFocus = FocusNode();
+  final FocusNode jamTutupFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
     try {
       aktivitasBox = Hive.box<AktivitasModel>('aktivitasBox');
-      
-      // Test data jika box kosong
-      
     } catch (e) {
       // Handle error silently or show user-friendly message
     }
@@ -60,7 +67,69 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
     lokasiDetailController.dispose();
     jamBukaController.dispose();
     jamTutupController.dispose();
+    nameFocus.dispose();
+    deskripsiFocus.dispose();
+    ratingFocus.dispose();
+    reviewFocus.dispose();
+    priceFocus.dispose();
+    lokasiDetailFocus.dispose();
+    jamBukaFocus.dispose();
+    jamTutupFocus.dispose();
     super.dispose();
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showWarningSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.warning, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.orange,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   void resetForm() {
@@ -87,6 +156,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
       setState(() {
         imageBase64 = base64Encode(bytes);
       });
+      _showSuccessSnackBar('Foto berhasil dipilih!');
     }
   }
 
@@ -114,165 +184,147 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
     }
   }
 
-  void _showUpdateConfirmationDialog() {
-    showDialog(
+  Future<bool> _showSaveConfirmation() async {
+    return await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Color(0xFFDC2626),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
           ),
-          title: Row(
+          child: Row(
             children: [
-              Icon(Icons.update, color: Colors.blue[600], size: 28),
-              const SizedBox(width: 12),
-              const Text(
-                'Konfirmasi Update',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              Icon(
+                editingIndex == null ? Icons.add_circle_outline : Icons.update,
+                color: Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                editingIndex == null ? 'Konfirmasi Tambah Aktivitas' : 'Konfirmasi Update Aktivitas',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          content: Column(
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Apakah Anda yakin ingin memperbarui data aktivitas ini?',
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue[200]!),
+              Text(
+                editingIndex == null
+                    ? 'Apakah Anda yakin ingin menambahkan aktivitas "${nameController.text}"?'
+                    : 'Apakah Anda yakin ingin memperbarui data aktivitas "${nameController.text}"?',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, size: 16, color: Colors.blue[600]),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Data yang akan diperbarui:',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: Colors.blue[700],
+              ),
+              if (editingIndex != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red[200]!),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 16, color: Colors.red[600]),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Data yang akan diperbarui:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red[700],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text('• Nama: ${nameController.text}'),
+                      Text('• Tipe: $selectedTipe'),
+                      Text('• Lokasi: $selectedLokasi'),
+                      Text('• Harga: Rp ${priceController.text}'),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
                     ),
-                    const SizedBox(height: 8),
-                    Text('• Nama: ${nameController.text}'),
-                    Text('• Tipe: $selectedTipe'),
-                    Text('• Lokasi: $selectedLokasi'),
-                    Text('• Harga: Rp ${priceController.text}'),
-                  ],
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    editingIndex == null ? 'Tambah' : 'Update',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Batal',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _performUpdate();
-              },
-              icon: const Icon(Icons.check, size: 18),
-              label: const Text('Ya, Update'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _performUpdate() async {
-    try {
-      final aktivitas = AktivitasModel(
-        nama: nameController.text,
-        deskripsi: deskripsiController.text,
-        tipe: selectedTipe!,
-        lokasi: selectedLokasi!,
-        lokasiDetail: lokasiDetailController.text,
-        rating: double.tryParse(ratingController.text) ?? 0.0,
-        jumlahReview: int.tryParse(reviewCountController.text) ?? 0,
-        harga: int.tryParse(priceController.text) ?? 0,
-        imageBase64: imageBase64 ?? '',
-        jamBuka: jamBukaController.text,
-        jamTutup: jamTutupController.text,
-      );
-
-      await aktivitasBox.putAt(editingIndex!, aktivitas);
-
-      setState(() {});
-      resetForm();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Aktivitas berhasil diperbarui!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted && _scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-          );
-        }
-      });
-
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('Error memperbarui aktivitas: $e'),
-              ],
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+        ],
+      ),
+    ) ?? false;
   }
 
   void saveAktivitas() async {
@@ -281,10 +333,8 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
         selectedLokasi != null &&
         lokasiDetailController.text.isNotEmpty
     ) {
-      if (editingIndex != null) {
-        _showUpdateConfirmationDialog();
-        return;
-      }
+      final confirmed = await _showSaveConfirmation();
+      if (!confirmed) return;
 
       try {
         final aktivitas = AktivitasModel(
@@ -301,26 +351,16 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
           jamTutup: jamTutupController.text,
         );
 
-        await aktivitasBox.add(aktivitas);
+        if (editingIndex == null) {
+          await aktivitasBox.add(aktivitas);
+          _showSuccessSnackBar('Aktivitas "${nameController.text}" berhasil ditambahkan!');
+        } else {
+          await aktivitasBox.putAt(editingIndex!, aktivitas);
+          _showSuccessSnackBar('Aktivitas "${nameController.text}" berhasil diperbarui!');
+        }
 
         setState(() {});
         resetForm();
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Aktivitas berhasil ditambahkan!'),
-                ],
-              ),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
 
         Future.delayed(const Duration(milliseconds: 300), () {
           if (mounted && _scrollController.hasClients) {
@@ -333,34 +373,10 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
         });
 
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  const Icon(Icons.error, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Text('Error menyimpan aktivitas: $e'),
-                ],
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        _showErrorSnackBar('Gagal menyimpan aktivitas. Silakan coba lagi.');
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.warning, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Mohon lengkapi semua field yang wajib diisi!'),
-            ],
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      _showWarningSnackBar('Mohon lengkapi semua field yang wajib diisi!');
     }
   }
 
@@ -387,48 +403,122 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
+      
+      _showSuccessSnackBar('Data aktivitas "${aktivitas.nama}" dimuat untuk diedit');
     }
   }
 
-  void deleteAktivitas(int index) {
-    showDialog(
+  Future<bool> _showDeleteConfirmation(String aktivitasNama) async {
+    return await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Konfirmasi Hapus'),
-          content: const Text('Apakah Anda yakin ingin menghapus aktivitas ini?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
             ),
-            TextButton(
-              onPressed: () async {
-                try {
-                  await aktivitasBox.deleteAt(index);
-                  
-                  if (mounted) {
-                    Navigator.of(context).pop();
-                    setState(() {});
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Aktivitas berhasil dihapus!'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (mounted) {
-                    Navigator.of(context).pop();
-                  }
-                }
-              },
-              child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.warning_outlined, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'Konfirmasi Hapus Aktivitas',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'Apakah Anda yakin ingin menghapus aktivitas "$aktivitasNama"?\n\nTindakan ini tidak dapat dibatalkan.',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
             ),
-          ],
-        );
-      },
-    );
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Hapus',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ) ?? false;
+  }
+
+  void deleteAktivitas(int index) async {
+    final aktivitas = aktivitasBox.getAt(index);
+    if (aktivitas != null) {
+      final confirmed = await _showDeleteConfirmation(aktivitas.nama);
+      if (confirmed) {
+        try {
+          await aktivitasBox.deleteAt(index);
+          _showSuccessSnackBar('Aktivitas "${aktivitas.nama}" berhasil dihapus!');
+          setState(() {});
+        } catch (e) {
+          _showErrorSnackBar('Gagal menghapus aktivitas. Silakan coba lagi.');
+        }
+      }
+    }
   }
 
   @override
@@ -471,7 +561,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              editingIndex == null ? 'Masukkan Data Aktivitas' : 'Edit Data Aktivitas',
+              editingIndex == null ? 'Masukkan Data Aktivitas Baru' : 'Edit Data Aktivitas',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
@@ -482,12 +572,14 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
                 children: [
                   buildTextField(
                     controller: nameController,
+                    focusNode: nameFocus,
                     label: 'Nama Aktivitas',
                     icon: Icons.local_activity,
                     hint: 'Masukkan nama aktivitas',
                   ),
                   buildTextField(
                     controller: deskripsiController,
+                    focusNode: deskripsiFocus,
                     label: 'Deskripsi',
                     icon: Icons.description,
                     hint: 'Masukkan deskripsi aktivitas',
@@ -509,6 +601,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
                   ),
                   buildTextField(
                     controller: lokasiDetailController,
+                    focusNode: lokasiDetailFocus,
                     label: 'Detail Lokasi',
                     icon: Icons.place,
                     hint: 'Masukkan alamat lengkap aktivitas',
@@ -519,6 +612,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
                       Expanded(
                         child: buildTimeField(
                           controller: jamBukaController,
+                          focusNode: jamBukaFocus,
                           label: 'Jam Buka',
                           icon: Icons.access_time,
                           onTap: () => _selectTime(context, jamBukaController),
@@ -528,6 +622,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
                       Expanded(
                         child: buildTimeField(
                           controller: jamTutupController,
+                          focusNode: jamTutupFocus,
                           label: 'Jam Tutup',
                           icon: Icons.access_time_filled,
                           onTap: () => _selectTime(context, jamTutupController),
@@ -541,6 +636,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
                       Expanded(
                         child: buildTextField(
                           controller: ratingController,
+                          focusNode: ratingFocus,
                           label: 'Rating',
                           icon: Icons.star,
                           hint: 'Contoh: 4.8',
@@ -551,6 +647,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
                       Expanded(
                         child: buildTextField(
                           controller: reviewCountController,
+                          focusNode: reviewFocus,
                           label: 'Jumlah Review',
                           icon: Icons.people,
                           hint: 'Contoh: 205',
@@ -561,6 +658,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
                   ),
                   buildTextField(
                     controller: priceController,
+                    focusNode: priceFocus,
                     label: 'Harga',
                     icon: Icons.attach_money,
                     hint: 'Masukkan harga aktivitas',
@@ -589,42 +687,81 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: imageBase64 != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.memory(
-                                base64Decode(imageBase64!),
-                                fit: BoxFit.cover,
-                              ),
+                          ? Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.memory(
+                                    base64Decode(imageBase64!),
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(Icons.check, color: Colors.white, size: 20),
+                                  ),
+                                ),
+                              ],
                             )
                           : const Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                                  Icon(Icons.add_photo_alternate, size: 40, color: Colors.black),
                                   SizedBox(height: 8),
-                                  Text('Unggah Foto', style: TextStyle(color: Colors.grey)),
+                                  Text('Unggah Foto', style: TextStyle(color: Colors.black)),
                                 ],
                               ),
                             ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: saveAktivitas,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: editingIndex == null ? Colors.green : Colors.blue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Row(
+                    children: [
+                      if (editingIndex != null) ...[
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              resetForm();
+                              _showSuccessSnackBar('Form berhasil direset');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[600],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(Icons.clear),
+                            label: const Text("Batal Edit"),
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: saveAktivitas,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: Icon(editingIndex == null ? Icons.add : Icons.update),
+                          label: Text(editingIndex == null ? "Tambah Aktivitas" : "Update Aktivitas"),
+                        ),
                       ),
-                      icon: Icon(editingIndex == null ? Icons.save : Icons.update),
-                      label: Text(editingIndex == null ? "Simpan" : "Update"),
-                    ),
+                    ],
                   ),
-                  
                 ],
               ),
             ),
@@ -637,7 +774,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.blue,
+                    color: const Color(0xFFDC2626),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ValueListenableBuilder(
@@ -659,25 +796,16 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
               builder: (context, Box<AktivitasModel> box, _) {
                 if (box.isEmpty) {
                   return Container(
-                    padding: const EdgeInsets.all(40),
-                    child: const Center(
-                      child: Column(
-                        children: [
-                          Icon(Icons.inbox, size: 64, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text(
-                            'Belum ada aktivitas yang ditambahkan',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Tambahkan aktivitas pertama Anda!',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      children: [
+                        Icon(Icons.local_activity_outlined, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Belum ada aktivitas yang ditambahkan',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -712,6 +840,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
 
   Widget buildTextField({
     required TextEditingController controller,
+    required FocusNode focusNode,
     required String label,
     required IconData icon,
     String? hint,
@@ -722,13 +851,14 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
         keyboardType: type,
         maxLines: maxLines,
         textAlign: TextAlign.left,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          prefixIcon: Icon(icon, size: 20),
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -738,8 +868,10 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
           ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
           alignLabelWithHint: true,
         ),
         validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
@@ -749,6 +881,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
   
   Widget buildTimeField({
     required TextEditingController controller,
+    required FocusNode focusNode,
     required String label,
     required IconData icon,
     required VoidCallback onTap,
@@ -757,12 +890,13 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
         readOnly: true,
         onTap: onTap,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 20),
-          suffixIcon: const Icon(Icons.arrow_drop_down),
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
+          suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.black),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -772,8 +906,10 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
           ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
         ),
         validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
       ),
@@ -795,7 +931,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 20),
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -805,8 +941,10 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
           ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
         ),
         items: items.map((item) {
           return DropdownMenuItem(value: item, child: Text(item, textAlign: TextAlign.left));

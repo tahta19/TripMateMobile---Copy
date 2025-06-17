@@ -36,6 +36,12 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
   String? imageBase64;
   int? editingIndex;
 
+  // Focus nodes untuk mengubah warna border
+  final FocusNode namaFocus = FocusNode();
+  final FocusNode hargaFocus = FocusNode();
+  final FocusNode waktuFocus = FocusNode();
+  final FocusNode durasiFocus = FocusNode();
+
   @override
   void initState() {
     super.initState();
@@ -56,7 +62,65 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
     hargaController.dispose();
     waktuController.dispose();
     durasiController.dispose();
+    namaFocus.dispose();
+    hargaFocus.dispose();
+    waktuFocus.dispose();
+    durasiFocus.dispose();
     super.dispose();
+  }
+
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  void _showWarningSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.warning, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(message),
+          ],
+        ),
+        backgroundColor: Colors.orange,
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
   }
 
   void resetForm() {
@@ -80,206 +144,168 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
       setState(() {
         imageBase64 = base64Encode(bytes);
       });
+      _showSuccessSnackBar('Logo berhasil dipilih!');
     }
   }
 
-  void _showUpdateConfirmationDialog() {
-    showDialog(
+  Future<bool> _showSaveConfirmation() async {
+    return await showDialog<bool>(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Color(0xFFDC2626),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
           ),
-          title: Row(
+          child: Row(
             children: [
-              Icon(Icons.update, color: Colors.blue[600], size: 28),
-              const SizedBox(width: 12),
-              const Text(
-                'Konfirmasi Update',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              Icon(
+                editingIndex == null ? Icons.add_circle_outline : Icons.update,
+                color: Colors.white,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                editingIndex == null ? 'Konfirmasi Tambah Pesawat' : 'Konfirmasi Update Pesawat',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          content: Column(
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Apakah Anda yakin ingin memperbarui data pesawat ini?',
-                style: TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue[200]!),
+              Text(
+                editingIndex == null
+                    ? 'Apakah Anda yakin ingin menambahkan pesawat "${namaController.text}"?'
+                    : 'Apakah Anda yakin ingin memperbarui data pesawat "${namaController.text}"?',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black87,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  // children: [
-                  //   Row(
-                  //     children: [
-                  //       Icon(Icons.info_outline, size: 16, color: Colors.blue[600]),
-                  //       const SizedBox(width: 6),
-                  //       Text(
-                  //         'Data yang akan diperbarui:',
-                  //         style: TextStyle(
-                  //           fontWeight: FontWeight.w600,
-                  //           color: Colors.blue[700],
-                  //         ),
-                  //       ),
-                  //     ],
-                  //   ),
-                  //   const SizedBox(height: 8),
-                  //   Text('• Maskapai: ${namaController.text}'),
-                  //   Text('• Rute: $selectedAsal → $selectedTujuan'),
-                  //   Text('• Kelas: $selectedKelas'),
-                  //   Text('• Harga: Rp ${hargaController.text}'),
-                  // ],
+              ),
+              if (editingIndex != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red[200]!),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 16, color: Colors.red[600]),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Data yang akan diperbarui:',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text('• Maskapai: ${namaController.text}'),
+                      Text('• Rute: $selectedAsal → $selectedTujuan'),
+                      Text('• Kelas: $selectedKelas'),
+                      Text('• Harga: Rp ${hargaController.text}'),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    editingIndex == null ? 'Tambah' : 'Update',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Batal',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _performUpdate();
-              },
-              icon: const Icon(Icons.check, size: 18),
-              label: const Text('Ya, Update'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _performUpdate() async {
-    try {
-      final pesawat = PesawatModel(
-        nama: namaController.text,
-        asal: selectedAsal ?? '',
-        tujuan: selectedTujuan ?? '',
-        kelas: selectedKelas ?? '',
-        harga: int.tryParse(hargaController.text) ?? 0,
-        durasi: int.tryParse(durasiController.text) ?? 0,
-        waktu: DateTime.parse(waktuController.text),
-        imageBase64: imageBase64 ?? '',
-      );
-
-      await pesawatBox.putAt(editingIndex!, pesawat);
-
-      setState(() {});
-      resetForm();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Data pesawat berhasil diperbarui!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      }
-
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted && _scrollController.hasClients) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-          );
-        }
-      });
-
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('Error memperbarui pesawat: $e'),
-              ],
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+        ],
+      ),
+    ) ?? false;
   }
 
   void savePesawat() async {
     final isValid = _formKey.currentState!.validate();
     
     if (!isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.warning, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Harap lengkapi seluruh field yang wajib diisi'),
-            ],
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      _showWarningSnackBar('Harap lengkapi seluruh field yang wajib diisi');
       return;
     }
     
     if (imageBase64 == null || imageBase64!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.warning, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Logo maskapai wajib diunggah'),
-            ],
-          ),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      _showWarningSnackBar('Logo maskapai wajib diunggah');
       return;
     }
 
-    if (editingIndex != null) {
-      _showUpdateConfirmationDialog();
-      return;
-    }
+    final confirmed = await _showSaveConfirmation();
+    if (!confirmed) return;
 
     try {
       final pesawat = PesawatModel(
@@ -293,26 +319,16 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
         imageBase64: imageBase64 ?? '',
       );
 
-      await pesawatBox.add(pesawat);
+      if (editingIndex == null) {
+        await pesawatBox.add(pesawat);
+        _showSuccessSnackBar('Pesawat "${namaController.text}" berhasil ditambahkan!');
+      } else {
+        await pesawatBox.putAt(editingIndex!, pesawat);
+        _showSuccessSnackBar('Pesawat "${namaController.text}" berhasil diperbarui!');
+      }
 
       setState(() {});
       resetForm();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Data pesawat berhasil disimpan!'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
 
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && _scrollController.hasClients) {
@@ -325,20 +341,7 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
       });
 
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Text('Error menyimpan pesawat: $e'),
-              ],
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      _showErrorSnackBar('Gagal menyimpan pesawat. Silakan coba lagi.');
     }
   }
 
@@ -362,52 +365,120 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
+      
+      _showSuccessSnackBar('Data pesawat "${pesawat.nama}" dimuat untuk diedit');
     }
   }
 
-  void deletePesawat(int index) async {
-    final confirm = await showDialog<bool>(
+  Future<bool> _showDeleteConfirmation(String pesawatNama) async {
+    return await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
-        title: const Text('Konfirmasi Hapus'),
-        content: const Text('Apakah Anda yakin ingin menghapus data pesawat ini?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
+        titlePadding: EdgeInsets.zero,
+        title: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Hapus', style: TextStyle(color: Colors.red)),
+          child: const Row(
+            children: [
+              Icon(Icons.warning_outlined, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'Konfirmasi Hapus Pesawat',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        content: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'Apakah Anda yakin ingin menghapus pesawat "$pesawatNama"?\n\nTindakan ini tidak dapat dibatalkan.',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Hapus',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
-    );
+    ) ?? false;
+  }
 
-    if (confirm == true) {
-      try {
-        await pesawatBox.deleteAt(index);
-        
-        if (mounted) {
+  void deletePesawat(int index) async {
+    final pesawat = pesawatBox.getAt(index);
+    if (pesawat != null) {
+      final confirmed = await _showDeleteConfirmation(pesawat.nama);
+      if (confirmed) {
+        try {
+          await pesawatBox.deleteAt(index);
+          _showSuccessSnackBar('Pesawat "${pesawat.nama}" berhasil dihapus!');
           setState(() {});
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  Icon(Icons.check_circle, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Data pesawat berhasil dihapus!'),
-                ],
-              ),
-              backgroundColor: Colors.red,
-            ),
-          );
+        } catch (e) {
+          _showErrorSnackBar('Gagal menghapus pesawat. Silakan coba lagi.');
         }
-      } catch (e) {
-        // Handle error silently
       }
     }
   }
@@ -502,7 +573,7 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              editingIndex == null ? 'Masukkan Data Pesawat' : 'Edit Data Pesawat',
+              editingIndex == null ? 'Masukkan Data Pesawat Baru' : 'Edit Data Pesawat',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 8),
@@ -513,6 +584,7 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
                 children: [
                   buildTextField(
                     controller: namaController,
+                    focusNode: namaFocus,
                     label: 'Nama Maskapai',
                     icon: Icons.flight,
                     hint: 'Masukkan nama maskapai',
@@ -540,6 +612,7 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
                   ),
                   buildTextField(
                     controller: hargaController,
+                    focusNode: hargaFocus,
                     label: 'Harga Tiket',
                     icon: Icons.attach_money,
                     hint: 'Masukkan harga tiket',
@@ -547,12 +620,14 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
                   ),
                   buildDateTimeField(
                     controller: waktuController,
+                    focusNode: waktuFocus,
                     label: 'Waktu Berangkat',
                     icon: Icons.schedule,
                     onTap: selectDateTime,
                   ),
                   buildTextField(
                     controller: durasiController,
+                    focusNode: durasiFocus,
                     label: 'Durasi (Menit)',
                     icon: Icons.timer,
                     hint: 'Masukkan durasi penerbangan',
@@ -581,42 +656,81 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: imageBase64 != null
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.memory(
-                                base64Decode(imageBase64!),
-                                fit: BoxFit.cover,
-                              ),
+                          ? Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.memory(
+                                    base64Decode(imageBase64!),
+                                    fit: BoxFit.cover,
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.green,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(Icons.check, color: Colors.white, size: 20),
+                                  ),
+                                ),
+                              ],
                             )
                           : const Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                                  Icon(Icons.add_photo_alternate, size: 40, color: Colors.black),
                                   SizedBox(height: 8),
-                                  Text('Unggah Logo', style: TextStyle(color: Colors.grey)),
+                                  Text('Unggah Logo', style: TextStyle(color: Colors.black)),
                                 ],
                               ),
                             ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: savePesawat,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: editingIndex == null ? Colors.green : Colors.blue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  Row(
+                    children: [
+                      if (editingIndex != null) ...[
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              resetForm();
+                              _showSuccessSnackBar('Form berhasil direset');
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[600],
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(Icons.clear),
+                            label: const Text("Batal Edit"),
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: savePesawat,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: Icon(editingIndex == null ? Icons.add : Icons.update),
+                          label: Text(editingIndex == null ? "Tambah Pesawat" : "Update Pesawat"),
+                        ),
                       ),
-                      icon: Icon(editingIndex == null ? Icons.save : Icons.update),
-                      label: Text(editingIndex == null ? "Simpan" : "Update"),
-                    ),
+                    ],
                   ),
-                  
                 ],
               ),
             ),
@@ -629,7 +743,7 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.blue,
+                    color: const Color(0xFFDC2626),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ValueListenableBuilder(
@@ -651,25 +765,16 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
               builder: (context, Box<PesawatModel> box, _) {
                 if (box.isEmpty) {
                   return Container(
-                    padding: const EdgeInsets.all(40),
-                    child: const Center(
-                      child: Column(
-                        children: [
-                          Icon(Icons.flight, size: 64, color: Colors.grey),
-                          SizedBox(height: 16),
-                          Text(
-                            'Belum ada data pesawat yang ditambahkan',
-                            style: TextStyle(fontSize: 16, color: Colors.grey),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Tambahkan data pesawat pertama Anda!',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      children: [
+                        Icon(Icons.flight_outlined, size: 64, color: Colors.grey[400]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Belum ada pesawat yang ditambahkan',
+                          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                        ),
+                      ],
                     ),
                   );
                 }
@@ -704,6 +809,7 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
 
   Widget buildTextField({
     required TextEditingController controller,
+    required FocusNode focusNode,
     required String label,
     required IconData icon,
     String? hint,
@@ -714,13 +820,14 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
         keyboardType: type,
         maxLines: maxLines,
         textAlign: TextAlign.left,
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          prefixIcon: Icon(icon, size: 20),
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -730,8 +837,10 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
           ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
           alignLabelWithHint: true,
         ),
         validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
@@ -741,6 +850,7 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
   
   Widget buildDateTimeField({
     required TextEditingController controller,
+    required FocusNode focusNode,
     required String label,
     required IconData icon,
     required VoidCallback onTap,
@@ -749,12 +859,13 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: TextFormField(
         controller: controller,
+        focusNode: focusNode,
         readOnly: true,
         onTap: onTap,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 20),
-          suffixIcon: const Icon(Icons.calendar_today),
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
+          suffixIcon: const Icon(Icons.calendar_today, color: Colors.black),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -764,8 +875,10 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
           ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
         ),
         validator: (value) => value == null || value.isEmpty ? 'Wajib diisi' : null,
       ),
@@ -787,7 +900,7 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 20),
+          prefixIcon: Icon(icon, size: 20, color: Colors.black),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -797,8 +910,10 @@ class _KelolaPesawatState extends State<KelolaPesawatPage> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.blue),
+            borderSide: const BorderSide(color: Color(0xFFDC2626), width: 2),
           ),
+          labelStyle: const TextStyle(color: Colors.grey),
+          floatingLabelStyle: const TextStyle(color: Color(0xFFDC2626)),
         ),
         items: items.map((item) {
           return DropdownMenuItem(value: item, child: Text(item, textAlign: TextAlign.left));
