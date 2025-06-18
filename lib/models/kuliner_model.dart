@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'kuliner_model.g.dart';
 
-@HiveType(typeId: 10) // Pastikan typeId unik
+@HiveType(typeId: 12) // Pastikan typeId unik
 class KulinerModel extends HiveObject {
   @HiveField(0)
   String nama;

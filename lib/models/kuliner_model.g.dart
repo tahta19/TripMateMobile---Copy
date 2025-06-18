@@ -8,7 +8,7 @@ part of 'kuliner_model.dart';
 
 class KulinerModelAdapter extends TypeAdapter<KulinerModel> {
   @override
-  final int typeId = 10;
+  final int typeId = 12;
 
   @override
   KulinerModel read(BinaryReader reader) {

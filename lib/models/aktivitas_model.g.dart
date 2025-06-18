@@ -8,7 +8,7 @@ part of 'aktivitas_model.dart';
 
 class AktivitasModelAdapter extends TypeAdapter<AktivitasModel> {
   @override
-  final int typeId = 9;
+  final int typeId = 11;
 
   @override
   AktivitasModel read(BinaryReader reader) {

@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tripmate_mobile/models/aktivitas_model.dart';
 import 'package:tripmate_mobile/admin/widgets/card_aktivitas_baru.dart';
+import 'package:tripmate_mobile/admin/pages/tempat/kelola_tiket_aktivitas.dart'; // TAMBAHAN IMPORT
 
 class KelolaAktivitas extends StatefulWidget {
   final VoidCallback? onBack;
@@ -128,6 +129,18 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  // FUNGSI BARU UNTUK NAVIGASI LANGSUNG KE KELOLA TIKET
+  void _navigateToKelolaTiket(AktivitasModel aktivitas, int index) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => KelolaTiketAktivitas(
+          aktivitas: aktivitas,
+        ),
       ),
     );
   }
@@ -791,6 +804,7 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
             ),
             const SizedBox(height: 8),
             
+            // BAGIAN YANG DIPERBAIKI - NAVIGASI LANGSUNG
             ValueListenableBuilder(
               valueListenable: aktivitasBox.listenable(),
               builder: (context, Box<AktivitasModel> box, _) {
@@ -826,6 +840,8 @@ class _KelolaAktivitasState extends State<KelolaAktivitas> {
                         aktivitas: aktivitas,
                         onEdit: () => editAktivitas(index),
                         onDelete: () => deleteAktivitas(index),
+                        // NAVIGASI LANGSUNG KE KELOLA TIKET TANPA DIALOG
+                        onTap: () => _navigateToKelolaTiket(aktivitas, index),
                       ),
                     );
                   },

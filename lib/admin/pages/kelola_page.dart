@@ -184,7 +184,7 @@ class _GridItemState extends State<GridItem> {
                 if (widget.label == 'Vila') {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const KelolaVila()),
+            MaterialPageRoute(builder: (context) => const KelolaVilaPage()),
           ).then((_) {
             setState(() {
               isSelected = false;

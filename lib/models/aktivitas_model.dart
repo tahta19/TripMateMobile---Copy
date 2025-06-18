@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'aktivitas_model.g.dart';
 
-@HiveType(typeId: 9) // Pastikan typeId unik
+@HiveType(typeId: 11) // Pastikan typeId unik
 class AktivitasModel extends HiveObject {
   @HiveField(0)
   String nama;

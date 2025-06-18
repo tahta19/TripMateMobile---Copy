@@ -3,7 +3,25 @@ import 'package:intl/intl.dart';
 
 part 'vila_model.g.dart';
 
-@HiveType(typeId: 11) // Gunakan typeId yang belum digunakan
+@HiveType(typeId: 9) // Ubah typeId untuk menghindari konflik
+class AreaVilaModel extends HiveObject {
+  @HiveField(0)
+  final String nama;
+
+  @HiveField(1)
+  final double jarakKm;
+
+  @HiveField(2)
+  final String iconName;
+
+  AreaVilaModel({
+    required this.nama,
+    required this.jarakKm,
+    required this.iconName,
+  });
+}
+
+@HiveType(typeId: 7) // Gunakan typeId yang belum digunakan
 class VilaModel extends HiveObject {
   @HiveField(0)
   final String nama;
@@ -27,7 +45,7 @@ class VilaModel extends HiveObject {
   final int jumlahReview;
 
   @HiveField(7)
-  final String fasilitas;
+  final List<String> fasilitas;
 
   @HiveField(8)
   final int jumlahKamar;
@@ -48,13 +66,10 @@ class VilaModel extends HiveObject {
   final String tipeVila;
 
   @HiveField(14)
-  final bool tersediaWifi;
+  final List<String> badge;
 
   @HiveField(15)
-  final bool tersediaKolam;
-
-  @HiveField(16)
-  final bool tersediaParkir;
+  final List<AreaVilaModel> areaVila;
 
   VilaModel({
     required this.nama,
@@ -71,9 +86,8 @@ class VilaModel extends HiveObject {
     required this.checkIn,
     required this.checkOut,
     required this.tipeVila,
-    this.tersediaWifi = false,
-    this.tersediaKolam = false,
-    this.tersediaParkir = false,
+    required this.badge,
+    required this.areaVila,
   });
 
   // Getter untuk format harga
@@ -87,15 +101,6 @@ class VilaModel extends HiveObject {
     return rating.toStringAsFixed(1);
   }
 
-  // Getter untuk fasilitas utama
-  List<String> get fasilitasUtama {
-    List<String> facilities = [];
-    if (tersediaWifi) facilities.add('WiFi');
-    if (tersediaKolam) facilities.add('Kolam Renang');
-    if (tersediaParkir) facilities.add('Parkir');
-    return facilities;
-  }
-
   // Getter untuk jam operasional
   String get jamOperasional {
     return 'Check-in: $checkIn | Check-out: $checkOut';
@@ -107,7 +112,7 @@ class VilaModel extends HiveObject {
   }
 }
 
-@HiveType(typeId: 8)
+@HiveType(typeId: 10)
 class VilaOptionsModel extends HiveObject {
   @HiveField(0)
   final List<String> tipeVila;
@@ -116,11 +121,15 @@ class VilaOptionsModel extends HiveObject {
   final List<String> lokasi;
 
   @HiveField(2)
-  final List<String> fasilitasTambahan;
+  final List<String> facilities;
+
+  @HiveField(3)
+  final List<String> badge;
 
   VilaOptionsModel({
     required this.tipeVila,
     required this.lokasi,
-    required this.fasilitasTambahan,
+    required this.facilities,
+    required this.badge,
   });
 }

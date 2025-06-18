@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/date_symbol_data_local.dart';
-
+import 'package:tripmate_mobile/models/pesawat_model.dart';
+// import 'package:flutter_localizations/flutter_localizations.dart';
 
 // Models
 import 'models/user_model.dart';
@@ -10,7 +11,12 @@ import 'models/landing_page_model.dart';
 import 'models/rencana_model.dart';
 import 'models/hotel_model.dart';
 import 'models/vila_model.dart'; // ✅ Tambahkan import vila model
-
+import 'models/tiket_model.dart'; // ✅ PERBAIKAN: Ganti dari tiket_model.dart ke tiket_aktivitas_model.dart
+import 'models/pesawat_model.dart';
+import 'models/aktivitas_model.dart';
+import 'models/pesawat_model.dart';
+import 'models/mobil_model.dart';
+import 'models/kuliner_model.dart';
 // Screens umum
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/login_signup/login_screen.dart';
@@ -22,6 +28,10 @@ import 'admin/main_admin_screen.dart';
 import 'admin/pages/dashboard/dashboard_page.dart';
 import 'admin/pages/dashboard/ubah_landing_page.dart';
 
+// Shared global state for location
+import 'shared/location_state.dart';
+import '/admin/pages/tempat/kelola_kuliner.dart';
+import '/admin/pages/tempat/kelola_aktivitas.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,6 +54,9 @@ void main() async {
   if (!Hive.isAdapterRegistered(HotelModelAdapter().typeId)) {
     Hive.registerAdapter(HotelModelAdapter());
   }
+  // if (!Hive.isAdapterRegistered(AreaAkomodasiModelAdapter().typeId)) {
+  //   Hive.registerAdapter(AreaAkomodasiModelAdapter());
+  // }
   if (!Hive.isAdapterRegistered(HotelOptionsModelAdapter().typeId)) {
     Hive.registerAdapter(HotelOptionsModelAdapter());
   }
@@ -51,10 +64,31 @@ void main() async {
   if (!Hive.isAdapterRegistered(VilaModelAdapter().typeId)) {
     Hive.registerAdapter(VilaModelAdapter());
   }
+  if (!Hive.isAdapterRegistered(AreaVilaModelAdapter().typeId)) {
+    Hive.registerAdapter(AreaVilaModelAdapter());
+  }
   if (!Hive.isAdapterRegistered(VilaOptionsModelAdapter().typeId)) {
     Hive.registerAdapter(VilaOptionsModelAdapter());
   }
+  if (!Hive.isAdapterRegistered(PesawatModelAdapter().typeId)) {
+    Hive.registerAdapter(PesawatModelAdapter());
+  }
+  // ✅ PERBAIKAN: Register adapter TiketAktivitasModel dengan nama yang benar
+  if (!Hive.isAdapterRegistered(TiketAktivitasModelAdapter().typeId)) {
+    Hive.registerAdapter(TiketAktivitasModelAdapter());
+  }
 
+  if (!Hive.isAdapterRegistered(AktivitasModelAdapter().typeId)) {
+    Hive.registerAdapter(AktivitasModelAdapter());
+  }
+
+  if (!Hive.isAdapterRegistered(MobilModelAdapter().typeId)) {
+    Hive.registerAdapter(MobilModelAdapter());
+  }
+  if (!Hive.isAdapterRegistered(KulinerModelAdapter().typeId)) {
+    Hive.registerAdapter(KulinerModelAdapter());
+  }
+  
   // Hapus box untuk development/debug mode (reset data)
   if (kDebugMode) {
     await Hive.deleteBoxFromDisk('users');
@@ -67,7 +101,13 @@ void main() async {
     await Hive.deleteBoxFromDisk('selectedLocationBox');
     // ✅ Tambahkan hapus box vila untuk debug
     await Hive.deleteBoxFromDisk('vilaBox');
+    await Hive.deleteBoxFromDisk('pesawatBox');
     await Hive.deleteBoxFromDisk('vilaOptionsBox');
+    // ✅ PERBAIKAN: Ganti nama box dari 'tiketBox' ke 'tiketAktivitasBox'
+    await Hive.deleteBoxFromDisk('tiketAktivitasBox');
+    await Hive.deleteBoxFromDisk('aktivitasBox');
+    await Hive.deleteBoxFromDisk('mobilBox');
+    await Hive.deleteBoxFromDisk('kulinerBox');
   }
 
   // Open all necessary boxes
@@ -82,6 +122,13 @@ void main() async {
   // ✅ Buka box vila
   await Hive.openBox<VilaModel>('vilaBox');
   await Hive.openBox<VilaOptionsModel>('vilaOptionsBox');
+  await Hive.openBox<PesawatModel>('pesawatOptionsBox');
+  await Hive.openBox<PesawatModel>('pesawatBox');
+  // ✅ PERBAIKAN: Buka box dengan nama yang konsisten 'tiketAktivitasBox'
+  await Hive.openBox<TiketAktivitasModel>('tiketAktivitasBox');
+  await Hive.openBox<AktivitasModel>('aktivitasBox');
+  await Hive.openBox<MobilModel>('mobilBox');
+  await Hive.openBox<KulinerModel>('kulinerBox');
 
   // Inisialisasi data user (kalau kosong)
   final userBox = Hive.box<UserModel>('users');
@@ -116,6 +163,14 @@ void main() async {
     final defaultBadges = ['Populer', 'Rekomendasi', 'Baru'];
     final defaultTipe = ['Hotel', 'Villa'];
 
+    // hotelOptionsBox.put(
+    //   0,
+    //   HotelOptionsModel(
+    //     tipe: defaultTipe,
+    //     badge: defaultBadges,
+    //     facilities: defaultFacilities,
+    //   ),
+    // );
   }
 
   // ✅ Inisialisasi data opsi vila (kalau kosong)
@@ -123,13 +178,8 @@ void main() async {
   if (vilaOptionsBox.isEmpty) {
     final defaultVilaOptions = VilaOptionsModel(
       tipeVila: [
-        'Vila Keluarga',
-        'Vila Romantis',
-        'Vila Mewah',
-        'Vila Pantai',
-        'Vila Pegunungan',
-        'Vila Modern',
-        'Vila Tradisional',
+        'Vila',
+        'Hotel',
       ],
       lokasi: [
         'Jakarta, DKI Jakarta',
@@ -142,22 +192,26 @@ void main() async {
         'Mataram, Nusa Tenggara Barat',
         'Kupang, Nusa Tenggara Timur',
       ],
-      fasilitasTambahan: [
+      facilities: [
+        'Wi-Fi',
         'AC',
         'TV LED',
         'Kulkas',
         'Dapur Lengkap',
-        'Balkon',
-        'Teras',
+        'Kolam Renang',
+        'Parkir',
         'BBQ Area',
         'Karaoke',
         'Gazebo',
         'Taman',
         'Security 24 Jam',
-        'Laundry',
-        'Water Heater',
-        'Bathtub',
-        'Sound System',
+      ],
+      badge: [
+        'Populer',
+        'Rekomendasi', 
+        'Baru',
+        'Terfavorit',
+        'Best Deal',
       ],
     );
     
@@ -168,68 +222,40 @@ void main() async {
   final vilaBox = Hive.box<VilaModel>('vilaBox');
   if (vilaBox.isEmpty) {
     final sampleVilas = [
-      VilaModel(
-        nama: 'Vila Sunset Paradise',
-        deskripsi: 'Vila mewah dengan pemandangan sunset yang menakjubkan, dilengkapi fasilitas lengkap untuk liburan keluarga yang tak terlupakan.',
-        lokasi: 'Denpasar, Bali',
-        lokasiDetail: 'Jl. Pantai Kuta No.15, Badung, Bali',
-        hargaPerMalam: 850000,
-        rating: 4.8,
-        jumlahReview: 124,
-        fasilitas: 'AC, TV LED, Kulkas, Dapur Lengkap, Balkon',
-        jumlahKamar: 3,
-        kapasitas: 6,
-        imageBase64: '',
-        checkIn: '14:00',
-        checkOut: '12:00',
-        tipeVila: 'Vila Pantai',
-        tersediaWifi: true,
-        tersediaKolam: true,
-        tersediaParkir: true,
-      ),
-      VilaModel(
-        nama: 'Vila Mountain Retreat',
-        deskripsi: 'Vila pegunungan yang sejuk dan asri, cocok untuk retreat keluarga dengan pemandangan hijau yang menyegarkan.',
-        lokasi: 'Bandung, Jawa Barat',
-        lokasiDetail: 'Jl. Raya Lembang No.88, Lembang, Bandung',
-        hargaPerMalam: 650000,
-        rating: 4.6,
-        jumlahReview: 89,
-        fasilitas: 'AC, TV, Kulkas, Dapur, Teras, Gazebo',
-        jumlahKamar: 2,
-        kapasitas: 4,
-        imageBase64: '',
-        checkIn: '15:00',
-        checkOut: '11:00',
-        tipeVila: 'Vila Pegunungan',
-        tersediaWifi: true,
-        tersediaKolam: false,
-        tersediaParkir: true,
-      ),
-      VilaModel(
-        nama: 'Vila Royal Family',
-        deskripsi: 'Vila keluarga yang luas dan nyaman dengan fasilitas lengkap untuk gathering keluarga besar.',
-        lokasi: 'Yogyakarta, DI Yogyakarta',
-        lokasiDetail: 'Jl. Kaliurang KM 12, Sleman, Yogyakarta',
-        hargaPerMalam: 750000,
-        rating: 4.7,
-        jumlahReview: 156,
-        fasilitas: 'AC, TV, Kulkas, Dapur Lengkap, Karaoke, BBQ Area',
-        jumlahKamar: 4,
-        kapasitas: 8,
-        imageBase64: '',
-        checkIn: '14:00',
-        checkOut: '12:00',
-        tipeVila: 'Vila Keluarga',
-        tersediaWifi: true,
-        tersediaKolam: true,
-        tersediaParkir: true,
-      ),
+      // 
+      // VilaModel(
+      //   nama: 'Vila Mountain Retreat',
+      //   deskripsi: 'Vila pegunungan yang sejuk dan asri, cocok untuk retreat keluarga dengan pemandangan hijau yang menyegarkan.',
+      //   lokasi: 'Bandung, Jawa Barat',
+      //   lokasiDetail: 'Jl. Raya Lembang No.88, Lembang, Bandung',
+      //   hargaPerMalam: 650000,
+      //   rating: 4.6,
+      //   jumlahReview: 89,
+      //   fasilitas: ['Wi-Fi', 'AC', 'TV LED', 'Dapur Lengkap', 'Gazebo'],
+      //   jumlahKamar: 2,
+      //   kapasitas: 4,
+      //   imageBase64: '',
+      //   checkIn: '15:00',
+      //   checkOut: '11:00',
+      //   tipeVila: 'Vila Pegunungan',
+      //   badge: ['Rekomendasi'],
+      //   areaVila: [
+      //     AreaVilaModel(nama: 'Tangkuban Perahu', jarakKm: 5.0, iconName: 'park'),
+      //     AreaVilaModel(nama: 'Floating Market', jarakKm: 2.5, iconName: 'restaurant'),
+      //   ],
+      // ),
     ];
     
     for (final vila in sampleVilas) {
       await vilaBox.add(vila);
     }
+  }
+
+  // ✅ PERBAIKAN: Inisialisasi sample data tiket aktivitas (kalau kosong)
+  final tiketAktivitasBox = Hive.box<TiketAktivitasModel>('tiketAktivitasBox');
+  if (tiketAktivitasBox.isEmpty) {
+    // Box kosong, siap untuk diisi data tiket aktivitas
+    print('TiketAktivitasBox berhasil dibuka dan siap digunakan');
   }
 
   // Inisialisasi lokasi (untuk dropdown lokasi pada header) dengan format "Kota, Provinsi"
@@ -252,6 +278,7 @@ void main() async {
     selectedLocationBox.put('selected', "Denpasar, Bali");
   }
   // Set value ke ValueNotifier global
+  LocationState.selectedLocation.value = selectedLocationBox.get('selected') as String;
 
   // Cek user aktif
   final activeUserBox = Hive.box<UserModel>('activeUserBox');
@@ -285,7 +312,11 @@ class TripMateApp extends StatelessWidget {
         Locale('id', 'ID'),
         Locale('en', 'US'),
       ],
-      
+      // localizationsDelegates: const [
+      //   GlobalMaterialLocalizations.delegate,
+      //   GlobalWidgetsLocalizations.delegate,
+      //   GlobalCupertinoLocalizations.delegate,
+      // ],
       home: initialScreen,
       routes: {
         '/login': (context) => const LoginScreen(),
